@@ -16,7 +16,9 @@ def run_watch(
     lookback_days: int = 400,  # 25日SMA + バッファ
     today: date | None = None,
 ) -> None:
-    cfg = load_config(config_path)
+    config_path = Path(config_path).resolve()
+    project_root = config_path.parent
+    cfg = load_config(str(config_path))
     today = today or date.today()
     start = today - timedelta(days=lookback_days)
 
@@ -44,7 +46,8 @@ def run_watch(
     print_signals(signals)
 
     if "csv" in cfg.output.format:
-        csv_path = Path(cfg.output.csv_path)
+        raw = cfg.output.csv_path.lstrip("./").lstrip(".\\")
+        csv_path = project_root / raw
         write_csv(signals, csv_path)
         print(f"[watch] CSV出力: {csv_path}")
 
