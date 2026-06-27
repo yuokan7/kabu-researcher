@@ -33,7 +33,7 @@ def test_passes_growth_filter_all_ok():
         _stmt("2024", 160, 85, 100), # +28%, +30%
         _stmt("2025", 200, 110, 120),# +25%, +29%
     ]
-    result = passes_growth_filter(stmts, min_yoy_pct=20.0, consecutive_periods=3, require_positive_cf=True)
+    result = passes_growth_filter(stmts, min_revenue_yoy_pct=20.0, min_income_yoy_pct=20.0, consecutive_periods=3, require_positive_cf=True)
     assert result is not None
     assert result.revenue_growth_pct >= 20.0
 
@@ -44,7 +44,7 @@ def test_passes_growth_filter_insufficient_growth():
         _stmt("2024", 125, 65, 100),
         _stmt("2025", 150, 80, 120),
     ]
-    result = passes_growth_filter(stmts, min_yoy_pct=20.0, consecutive_periods=3, require_positive_cf=True)
+    result = passes_growth_filter(stmts, min_revenue_yoy_pct=20.0, min_income_yoy_pct=20.0, consecutive_periods=3, require_positive_cf=True)
     assert result is None
 
 def test_passes_growth_filter_negative_cf():
@@ -54,7 +54,7 @@ def test_passes_growth_filter_negative_cf():
         _stmt("2024", 160, 85, 100),
         _stmt("2025", 200, 110, 120),
     ]
-    result = passes_growth_filter(stmts, min_yoy_pct=20.0, consecutive_periods=3, require_positive_cf=True)
+    result = passes_growth_filter(stmts, min_revenue_yoy_pct=20.0, min_income_yoy_pct=20.0, consecutive_periods=3, require_positive_cf=True)
     assert result is None
 
 def test_passes_growth_filter_insufficient_periods():
@@ -62,7 +62,7 @@ def test_passes_growth_filter_insufficient_periods():
         _stmt("2024", 160, 85, 100),
         _stmt("2025", 200, 110, 120),
     ]
-    result = passes_growth_filter(stmts, min_yoy_pct=20.0, consecutive_periods=3, require_positive_cf=True)
+    result = passes_growth_filter(stmts, min_revenue_yoy_pct=20.0, min_income_yoy_pct=20.0, consecutive_periods=3, require_positive_cf=True)
     assert result is None
 
 
