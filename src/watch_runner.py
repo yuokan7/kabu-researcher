@@ -5,20 +5,28 @@
 from datetime import date, timedelta
 from pathlib import Path
 
-from src.config import load_config, ScreenerConfig
+from src.config import load_config
 from src.fetch import fetch_daily_close
 from src.trigger import calc_deviation, detect_fresh_touches
 from src.notify import print_signals, write_csv
 
+_PROJECT_ROOT = Path(__file__).parent.parent
+
+
+def _resolve_path(raw: str) -> Path:
+    p = Path(raw)
+    if p.is_absolute():
+        return p
+    return _PROJECT_ROOT / raw.lstrip("./").lstrip(".\\")
+
 
 def run_watch(
-    config_path: str = "conditions.yaml",
-    lookback_days: int = 400,  # 25日SMA + バッファ
+    config_path: str | Path | None = None,
+    lookback_days: int = 400,
     today: date | None = None,
 ) -> None:
-    config_path = Path(config_path).resolve()
-    project_root = config_path.parent
-    cfg = load_config(str(config_path))
+    config_path = Path(config_path) if config_path else _PROJECT_ROOT / "conditions.yaml"
+    cfg = load_config(config_path)
     today = today or date.today()
     start = today - timedelta(days=lookback_days)
 
@@ -26,13 +34,15 @@ def run_watch(
     threshold = cfg.trigger.market.threshold_pct
     fresh_days = cfg.trigger.market.fresh_touch_min_days
     window = cfg.trigger.deviation_window
+    db_path = _resolve_path(cfg.data_sources.cache_db)
+    csv_path = _resolve_path(cfg.output.csv_path)
 
     print(f"[watch] {symbol} の終値を取得中... ({start} 〜 {today})")
     prices = fetch_daily_close(
         symbol=symbol,
         start=start,
         end=today,
-        db_path=cfg.data_sources.cache_db,
+        db_path=str(db_path),
     )
 
     if len(prices) < window:
@@ -46,8 +56,6 @@ def run_watch(
     print_signals(signals)
 
     if "csv" in cfg.output.format:
-        raw = cfg.output.csv_path.lstrip("./").lstrip(".\\")
-        csv_path = project_root / raw
         write_csv(signals, csv_path)
         print(f"[watch] CSV出力: {csv_path}")
 
