@@ -9,7 +9,7 @@ from src.dashboard_data import DashboardData, build_dashboard_data
 _PROJECT_ROOT = Path(__file__).parent
 _CONFIG_PATH = _PROJECT_ROOT / "conditions.yaml"
 
-st.set_page_config(page_title="まだ株ダッシュボード", layout="wide")
+st.set_page_config(page_title="株リサーチャー", layout="wide")
 
 st.markdown("""
 <style>
@@ -43,22 +43,60 @@ def _get_data() -> DashboardData:
     return build_dashboard_data(cfg, today=date.today())
 
 
+def _nikkei_bar(deviation_pct: float | None, h: int = 18) -> str:
+    """日経用の双方向ゲージ。+15%〜-15%の範囲で中央が0%。"""
+    if deviation_pct is None:
+        return "<div style='color:#444;font-size:12px;margin:6px 0;'>—</div>"
+    scale = 15.0  # ±15%を表示範囲とする
+    center = 50.0  # 中央(0%)の位置(%)
+    # マーカーの横位置: 0%=50%, +15%=0%, -15%=100%
+    marker_pos = max(0.0, min(100.0, center - deviation_pct / scale * center))
+    # 中央からマーカーまでを塗る
+    if deviation_pct >= 0:
+        fill_left  = marker_pos
+        fill_width = center - marker_pos
+        fill_col   = "#4a9eff"
+    else:
+        fill_left  = center
+        fill_width = marker_pos - center
+        fill_col   = "#00e676" if deviation_pct <= _DANGER else "#ff8c00" if deviation_pct <= _WARNING else "#4a9eff88"
+    warn_pos   = center - _WARNING / scale * center
+    danger_pos = center - _DANGER  / scale * center
+    bar = (
+        f'<div style="position:relative;width:100%;height:{h}px;background:#1e1e1e;border-radius:6px;overflow:hidden;margin:8px 0;">'
+        f'<div style="position:absolute;left:{fill_left:.1f}%;width:{fill_width:.1f}%;height:100%;background:{fill_col};box-shadow:0 0 10px {fill_col}66;"></div>'
+        f'<div style="position:absolute;left:50%;top:0;height:100%;width:2px;background:#444;"></div>'
+        f'<div style="position:absolute;left:{warn_pos:.1f}%;top:0;height:100%;width:2px;background:#ff8c00;opacity:0.8;"></div>'
+        f'<div style="position:absolute;left:{danger_pos:.1f}%;top:0;height:100%;width:2px;background:#00e676;opacity:0.8;"></div>'
+        f'<div style="position:absolute;left:{marker_pos:.1f}%;top:50%;transform:translate(-50%,-50%);width:{h*1.2:.0f}px;height:{h*1.2:.0f}px;background:#fff;border-radius:50%;box-shadow:0 0 6px #fff8;"></div>'
+        f'</div>'
+        f'<div style="display:flex;justify-content:space-between;font-size:10px;color:#444;margin-top:2px;">'
+        f'<span>+{scale:.0f}%</span>'
+        f'<span style="color:#ff8c00;">⚡ {_WARNING}%</span>'
+        f'<span style="color:#888;">0%</span>'
+        f'<span style="color:#00e676;">🎯 {_DANGER}%</span>'
+        f'<span>-{scale:.0f}%</span>'
+        f'</div>'
+    )
+    return bar
+
+
 def _bar(deviation_pct: float | None, h: int = 14) -> str:
-    """改行なしの1行HTMLでカラーバーを返す（Markdownのコードブロック誤認を防ぐ）"""
+    """監視リスト用の片方向バー（0% → 買いチャンス）"""
     if deviation_pct is None:
         return "<div style='color:#444;font-size:12px;margin:6px 0;'>—</div>"
     fill = max(0.0, min(deviation_pct / _DANGER * 100, 100.0))
     warn = _WARNING / _DANGER * 100
     col  = "#00e676" if deviation_pct <= _DANGER else "#ff8c00" if deviation_pct <= _WARNING else "#4a9eff"
     bar  = f'<div style="position:relative;width:100%;height:{h}px;background:#1e1e1e;border-radius:6px;overflow:hidden;margin:8px 0;"><div style="width:{fill:.1f}%;height:100%;background:{col};border-radius:6px;box-shadow:0 0 8px {col}44;"></div><div style="position:absolute;left:{warn:.1f}%;top:0;height:100%;width:2px;background:#ff8c00;opacity:0.7;"></div></div>'
-    lbl  = f'<div style="display:flex;justify-content:space-between;font-size:10px;color:#444;margin-top:2px;"><span>0%</span><span style="color:#ff8c00;">⚡ 接近 {_WARNING}%</span><span style="color:#00e676;">🎯 チャンス {_DANGER}%</span></div>'
+    lbl  = f'<div style="display:flex;justify-content:space-between;font-size:10px;color:#444;margin-top:2px;"><span>0%</span><span style="color:#ff8c00;">⚡ {_WARNING}%</span><span style="color:#00e676;">🎯 {_DANGER}%</span></div>'
     return bar + lbl
 
 
 # ─── ヘッダー ─────────────────────────────────────────────────
 c_ttl, c_btn = st.columns([7, 1])
 with c_ttl:
-    st.markdown("<h1 style='margin-bottom:0;'>📈 まだ株ダッシュボード</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='margin-bottom:0;'>📈 株リサーチャー</h1>", unsafe_allow_html=True)
 with c_btn:
     st.write("")
     if st.button("🔄 更新"):
@@ -82,7 +120,7 @@ st.markdown(
     f'<span style="font-size:52px;font-weight:900;color:{clr};letter-spacing:-2px;line-height:1;">{dev_str}</span>'
     f'<div><div style="font-size:20px;color:#aaa;">{price_str}</div>'
     f'<div style="font-size:18px;margin-top:4px;">{_ICON.get(m.status,"")} <span style="color:{clr};font-weight:700;">{_LABEL.get(m.status,"")}</span></div></div></div>'
-    f'{_bar(m.current_deviation_pct, h=18)}'
+    f'{_nikkei_bar(m.current_deviation_pct, h=18)}'
     f'</div>',
     unsafe_allow_html=True,
 )
@@ -100,7 +138,7 @@ st.divider()
 
 # ─── 監視リスト ───────────────────────────────────────────────
 st.markdown(
-    "<h2 style='margin-bottom:16px;'>📋 監視リスト"
+    "<h2 style='margin-bottom:16px;'>📋 監視銘柄"
     "<span style='font-size:14px;color:#555;font-weight:400;margin-left:12px;'>"
     "乖離率が深い順 — 🎯 が今すぐ買い検討の銘柄</span></h2>",
     unsafe_allow_html=True,
