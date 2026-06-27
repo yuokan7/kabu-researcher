@@ -57,10 +57,7 @@ c2.metric("25日乖離率", f"{m.current_deviation_pct:.2f}%" if m.current_devia
 c3.metric("状態", _STATUS_LABEL.get(m.status, m.status))
 
 if m.fresh_touch_fired and m.last_signal_date:
-    st.error(
-        f"⚠️ 3か月ぶりの暴落シグナル発火（最終: {m.last_signal_date}）"
-        "— 監視リストを確認してください"
-    )
+    st.error(f"⚠️ 3か月ぶりの暴落シグナル発火（最終: {m.last_signal_date}）— 監視リストを確認してください")
 elif m.status == "danger":
     st.warning("暴落点付近です。監視リストの乖離率を確認してください。")
 elif m.status == "warning":
