@@ -73,15 +73,25 @@ def get_listed_stocks(id_token: str, markets: list[str]) -> list[StockInfo]:
 
 
 def get_statements_for_code(id_token: str, code: str) -> list[FinancialStatement]:
-    """特定銘柄の財務諸表（通期のみ）を取得する。"""
-    r = requests.get(
-        f"{_BASE}/fins/summary",
-        headers=_headers(id_token),
-        params={"code": code},
-        timeout=30,
-    )
-    if r.status_code != 200:
-        print(f"  [WARN] {code}: HTTP {r.status_code}")
+    """特定銘柄の財務諸表（通期のみ）を取得する。429時は最大3回リトライ。"""
+    for attempt in range(3):
+        r = requests.get(
+            f"{_BASE}/fins/summary",
+            headers=_headers(id_token),
+            params={"code": code},
+            timeout=30,
+        )
+        if r.status_code == 429:
+            wait = 2 ** attempt * 5  # 5s → 10s → 20s
+            print(f"  [WARN] {code}: HTTP 429 (rate limit) — {wait}s待機して再試行")
+            time.sleep(wait)
+            continue
+        if r.status_code != 200:
+            print(f"  [WARN] {code}: HTTP {r.status_code}")
+            return []
+        break
+    else:
+        print(f"  [WARN] {code}: 3回リトライ失敗")
         return []
 
     def _f(v) -> float | None:
@@ -119,5 +129,5 @@ def get_all_statements(
         if i > 0 and i % 100 == 0:
             print(f"  財務データ取得中... {i}/{len(codes)}")
         result[code] = get_statements_for_code(id_token, code)
-        time.sleep(delay_sec)
+        time.sleep(delay_sec)  # 1.0秒推奨（無料プランのレート制限対策）
     return result

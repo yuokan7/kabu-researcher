@@ -78,7 +78,7 @@ def main() -> None:
     print(f"\n[3/5] 財務データ取得中（{len(stocks)}銘柄）...")
     codes = [s.code for s in stocks]
     names = {s.code: s.name for s in stocks}
-    statements = get_all_statements(id_token, codes, delay_sec=0.3)
+    statements = get_all_statements(id_token, codes, delay_sec=1.0)
     print("  取得完了")
 
     # Step 4a: 第1層 業績フィルタ
