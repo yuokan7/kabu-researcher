@@ -1,5 +1,6 @@
 from pathlib import Path
 from datetime import date, timedelta
+import time
 import duckdb
 import pandas as pd
 import yfinance as yf
@@ -58,11 +59,18 @@ def fetch_daily_close(
             needed_end = max(missing)
 
         ticker = yf.Ticker(symbol)
-        raw = ticker.history(
-            start=str(needed_start),
-            end=str(needed_end + timedelta(days=1)),
-            auto_adjust=True,
-        )["Close"].dropna()
+        raw = pd.Series([], dtype=float)
+        for attempt in range(3):
+            try:
+                raw = ticker.history(
+                    start=str(needed_start),
+                    end=str(needed_end + timedelta(days=1)),
+                    auto_adjust=True,
+                )["Close"].dropna()
+                break
+            except Exception:
+                if attempt < 2:
+                    time.sleep(2 ** attempt)  # 1秒 → 2秒
 
         if not raw.empty:
             rows = [(symbol, d.date(), float(v)) for d, v in raw.items()]
