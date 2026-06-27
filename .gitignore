@@ -1,0 +1,20 @@
+# 環境変数・秘密情報
+.env
+.env.*
+
+# DuckDBキャッシュ（再生成可能）
+data/
+
+# 出力ファイル
+out/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
