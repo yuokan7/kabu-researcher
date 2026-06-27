@@ -74,7 +74,13 @@ def get_listed_stocks(id_token: str, markets: list[str]) -> list[StockInfo]:
 
 
 def _parse_statements(data: list[dict]) -> list[FinancialStatement]:
-    """APIレスポンスのリストから FinancialStatement のリストを生成する。"""
+    """APIレスポンスのリストから FinancialStatement のリストを生成する。
+
+    J-Quants V2 /fins/summary のフィールド:
+      Sales=売上高(実績), NP=当期純利益(実績), CFO=営業CF(実績)
+      FSales/FNP=予想値（EarnForecastRevision等）
+    Salesが空のレコード（予想修正等）はスキップして実績のみを使う。
+    """
     def _f(v) -> float | None:
         try:
             return float(v) if v not in (None, "", "－", "-") else None
@@ -85,6 +91,9 @@ def _parse_statements(data: list[dict]) -> list[FinancialStatement]:
     for item in data:
         if item.get("CurPerType") != "FY":
             continue
+        net_sales = _f(item.get("Sales"))
+        if net_sales is None:
+            continue  # 予想修正レコードはSalesが空 → スキップ
         code = item.get("LocalCode", item.get("Code", ""))
         if len(code) == 5:
             code = code[:4]
@@ -93,8 +102,8 @@ def _parse_statements(data: list[dict]) -> list[FinancialStatement]:
         results.append(FinancialStatement(
             code=code,
             period=period,
-            net_sales=_f(item.get("Sales")),
-            net_income=_f(item.get("Profit")),
+            net_sales=net_sales,
+            net_income=_f(item.get("NP")),   # Profit → NP が正しいフィールド名
             operating_cf=_f(item.get("CFO")),
         ))
     return results
@@ -116,8 +125,6 @@ def get_all_statements_bulk(
     today = date.today()
     check_date = today.replace(day=1) - timedelta(days=1)  # 先月末
 
-    _debug_printed = False  # 最初の1件だけフィールド名をデバッグ出力
-
     for month_idx in range(lookback_months):
         date_str = check_date.strftime("%Y-%m-%d")
 
@@ -134,12 +141,7 @@ def get_all_statements_bulk(
                 time.sleep(wait)
                 continue
             if r.status_code == 200:
-                data = r.json().get("data", [])
-                if not _debug_printed and data:
-                    print(f"  [DEBUG] {date_str} サンプル1件のキー: {list(data[0].keys())}")
-                    print(f"  [DEBUG] サンプルデータ: {data[0]}")
-                    _debug_printed = True
-                stmts = _parse_statements(data)
+                stmts = _parse_statements(r.json().get("data", []))
                 for stmt in stmts:
                     if stmt.code not in result:
                         result[stmt.code] = []
