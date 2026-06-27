@@ -1,6 +1,9 @@
+import logging
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
+
+_logger = logging.getLogger(__name__)
 
 import pandas as pd
 
@@ -19,8 +22,8 @@ def _resolve(raw: str) -> Path:
 @dataclass
 class MarketStatus:
     symbol: str
-    current_price: float
-    current_deviation_pct: float
+    current_price: float | None
+    current_deviation_pct: float | None
     status: str  # "normal" | "warning" | "danger" | "no_data"
     fresh_touch_fired: bool
     last_signal_date: date | None
@@ -82,8 +85,8 @@ def build_market_status(
     if len(prices) < window:
         return MarketStatus(
             symbol=symbol,
-            current_price=0.0,
-            current_deviation_pct=0.0,
+            current_price=None,
+            current_deviation_pct=None,
             status="no_data",
             fresh_touch_fired=False,
             last_signal_date=None,
@@ -111,7 +114,7 @@ def build_market_status(
     return MarketStatus(
         symbol=symbol,
         current_price=current_price,
-        current_deviation_pct=current_dev if current_dev is not None else 0.0,
+        current_deviation_pct=current_dev,
         status=status,
         fresh_touch_fired=fresh_touch_fired,
         last_signal_date=last_signal_date,
@@ -154,6 +157,7 @@ def build_watch_rows(
                 status=status,
             ))
         except Exception:
+            _logger.warning("fetch failed for %s", symbol, exc_info=True)
             rows.append(WatchRow(
                 symbol=symbol, name=name,
                 current_price=None, current_deviation_pct=None, status="no_data",
