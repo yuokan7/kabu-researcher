@@ -109,61 +109,71 @@ def _parse_statements(data: list[dict]) -> list[FinancialStatement]:
     return results
 
 
+def _earnings_season_dates(years_back: int = 4) -> list[str]:
+    """
+    決算発表が集中する月の全日程を返す（新しい順）。
+    - 3月期決算 → 5月・6月に発表
+    - 9月期決算 → 11月・12月に発表
+    - 12月期決算 → 2月・3月に発表
+    """
+    from calendar import monthrange
+
+    today = date.today()
+    dates: set[str] = set()
+
+    for yr_offset in range(years_back + 1):
+        yr = today.year - yr_offset
+        for month in [2, 3, 5, 6, 11, 12]:
+            _, n_days = monthrange(yr, month)
+            for day in range(1, n_days + 1):
+                d = date(yr, month, day)
+                if d <= today:
+                    dates.add(d.strftime("%Y-%m-%d"))
+
+    return sorted(dates, reverse=True)  # 新しい順
+
+
 def get_all_statements_bulk(
     id_token: str,
-    lookback_months: int = 36,
+    lookback_months: int = 36,   # 後方互換のため引数は残すが未使用
     delay_sec: float = 0.5,
 ) -> dict[str, list[FinancialStatement]]:
     """
-    ページネーションで全銘柄の財務諸表を一括取得する。
-    date/code 指定なしで叩き、pagination_key でページを進める。
-    月末日クエリより大幅に多くの銘柄データが取れる。
+    決算発表シーズン（5・6・11・12・2・3月）の毎日を指定して
+    全銘柄の通期財務諸表を取得する。
+    約720 APIコール（4年分）、delay 0.5s で約6分。
     """
     result: dict[str, list[FinancialStatement]] = {}
-    pagination_key: str | None = None
-    page = 0
+    target_dates = _earnings_season_dates(years_back=4)
+    total = len(target_dates)
 
-    while True:
-        params: dict = {}
-        if pagination_key:
-            params["pagination_key"] = pagination_key
+    for i, date_str in enumerate(target_dates):
+        if i > 0 and i % 120 == 0:
+            print(f"  財務データ取得中... {i}/{total}日 ({len(result)}銘柄)")
 
         for attempt in range(3):
             r = requests.get(
                 f"{_BASE}/fins/summary",
                 headers=_headers(id_token),
-                params=params,
-                timeout=60,
+                params={"date": date_str},
+                timeout=30,
             )
             if r.status_code == 429:
-                wait = 2 ** attempt * 10
-                print(f"  [WARN] HTTP 429 (page {page}) — {wait}s待機")
+                wait = 2 ** attempt * 5
+                print(f"  [WARN] {date_str}: HTTP 429 — {wait}s待機")
                 time.sleep(wait)
                 continue
+            if r.status_code == 200:
+                stmts = _parse_statements(r.json().get("data", []))
+                for stmt in stmts:
+                    if stmt.code not in result:
+                        result[stmt.code] = []
+                    result[stmt.code].append(stmt)
             break
-
-        if r.status_code != 200:
-            print(f"  [WARN] HTTP {r.status_code} — 取得中断")
-            break
-
-        body = r.json()
-        stmts = _parse_statements(body.get("data", []))
-        for stmt in stmts:
-            if stmt.code not in result:
-                result[stmt.code] = []
-            result[stmt.code].append(stmt)
-
-        page += 1
-        if page % 10 == 0:
-            print(f"  財務データ取得中... {page}ページ目 ({len(result)}銘柄)")
-
-        pagination_key = body.get("pagination_key")
-        if not pagination_key:
-            break  # 最終ページ
 
         time.sleep(delay_sec)
 
-    # 各銘柄の statements を period 昇順にソートして重複除去
+    # period 昇順ソート + 重複除去
     for code in result:
         seen: set[str] = set()
         deduped = []
@@ -176,7 +186,6 @@ def get_all_statements_bulk(
     return result
 
 
-# 後方互換性のため残す
 def get_all_statements(
     id_token: str,
     codes: list[str],
