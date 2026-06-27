@@ -66,12 +66,23 @@ class DataSourcesConfig(BaseModel):
     cache_db: str = "./data/cache.duckdb"
 
 
+class DashboardConfig(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    warning_deviation_pct: float = -7
+    danger_deviation_pct: float = -10
+    price_lookback_days: int = 60
+    cache_ttl_minutes: int = 60
+    fresh_touch_highlight_days: int = 90
+
+
 class ScreenerConfig(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     trigger: TriggerConfig
     output: OutputConfig
     data_sources: DataSourcesConfig = Field(default_factory=DataSourcesConfig)
+    dashboard: DashboardConfig = Field(default_factory=DashboardConfig)
 
 
 def load_config(path: Path | str = "conditions.yaml") -> ScreenerConfig:

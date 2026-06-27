@@ -29,3 +29,18 @@ def test_output_formats():
     cfg = load_config(YAML_PATH)
     assert "csv" in cfg.output.format
     assert "console" in cfg.output.format
+
+
+def test_dashboard_config_warning_deviation():
+    cfg = load_config(YAML_PATH)
+    assert cfg.dashboard.warning_deviation_pct == -7
+
+
+def test_dashboard_config_danger_deviation():
+    cfg = load_config(YAML_PATH)
+    assert cfg.dashboard.danger_deviation_pct == -10
+
+
+def test_dashboard_config_cache_ttl():
+    cfg = load_config(YAML_PATH)
+    assert cfg.dashboard.cache_ttl_minutes == 60

@@ -1,0 +1,138 @@
+# =============================================================
+#  まだ株・奥義継承スクリーナー  条件定義ファイル
+#  ここを書き換えるだけで、ロジックを触らず閾値を調整できる
+# =============================================================
+
+# ---- 対象ユニバース ----
+universe:
+  markets: [プライム, スタンダード, グロース]   # 対象市場
+  exclude_sectors: []          # 除外業種（例: [銀行業, 保険業]）
+  min_market_cap_oku_yen: null # 時価総額下限(億円)。nullで無制限
+  exclude_etf_reit: true       # ETF/REITを除外
+
+# =============================================================
+#  第1層: 業績フィルタ（完全自動化・最初に効かせて母集団を絞る）
+# =============================================================
+fundamentals:
+  revenue_growth:              # 売上高
+    min_yoy_pct: 20            # 前年比成長率の下限(%)
+    consecutive_periods: 3     # 直近この期数すべてを満たす
+  net_income_growth:           # 純利益
+    min_yoy_pct: 20
+    consecutive_periods: 3
+  require_positive_operating_cf: true   # 営業CFがプラス
+  cf_quality:                  # 粉飾除外: 営業利益と営業CFが離れすぎない
+    enabled: true
+    max_oi_to_ocf_ratio: 2.0   # |営業利益 / 営業CF| がこの範囲内
+    min_oi_to_ocf_ratio: 0.3
+  quality_gates:               # 任意（上級・業種で平均が違う点に注意）
+    enabled: false
+    min_equity_ratio_pct: 60   # 自己資本比率
+    min_operating_margin_pct: 20  # 営業利益率
+    min_roe_pct: null
+  # 高成長プリセット（新興テンバガー狙い・/pool --aggressive で使用）
+  aggressive_preset:
+    revenue_min_yoy_pct: 50
+    net_income_min_yoy_pct: 50
+
+# =============================================================
+#  第2層: 月足チャートフィルタ（第1層通過銘柄にのみ適用）
+# =============================================================
+trend:
+  timeframe: monthly
+  ma_periods: [6, 12, 24]      # 月足の 短/中/長期SMA（要バックテスト調整）
+  perfect_order:
+    enabled: true              # 短>中>長 かつ 終値>短期 かつ 全MA上向き
+    require_rising_slope: true
+  higher_highs_lows:           # 高値・安値を切り上げ続けているか
+    enabled: true
+    swing_window_months: 3     # スイング検出の窓
+    lookback_months: 36
+    min_swings: 2              # 連続切り上げを確認するスイング数
+  all_time_high:               # 上場来高値の更新中 or 接近
+    mode: proximity            # proximity | new_high_recent
+    max_distance_pct: 25       # 上場来高値からの下方乖離許容(%)
+    new_high_within_months: 12 # mode=new_high_recent のとき
+  reference_crash_floor:       # この暴落安値を割っていないこと
+    enabled: true
+    crash_date: "2020-03-19"   # コロナショック安値（基準）
+    # 複数の基準暴落を見たい場合は dates: ["2020-03-19", ...]
+
+# =============================================================
+#  第3層: 暴落点トリガー（プール銘柄＋日経に毎日適用）
+#  乖離率 = (終値 - 25日SMA) / 25日SMA * 100
+# =============================================================
+trigger:
+  deviation_window: 25
+  market:                      # 地合い暴落点（日経）
+    index_symbol: "^N225"
+    threshold_pct: -10         # 初心者:-10 / 上級:-7
+    fresh_touch_min_days: 90   # 前回タッチから3か月以上空けて初タッチ
+    entry_on_first_touch: true # 最初に閾値タッチした日に固定（深掘りを待たない）
+  individual:                  # 個別暴落点
+    mode: calibrated           # calibrated | fixed
+    fixed_threshold_pct: -10   # mode=fixed のとき
+    calibration:               # mode=calibrated: 各銘柄の履歴から下限を自動算出
+      lookback_years: 10
+      method: percentile       # percentile | touch_count
+      percentile: 3            # 乖離率分布の下位p%を下限とする
+      target_touch_count_min: 10  # 「10年で10〜20回タッチする下限」で検証
+      target_touch_count_max: 20
+      fallback_threshold_pct: -10 # 履歴不足時のフォールバック
+  ranking:                     # 発火銘柄が複数のときの優先順位
+    sort_by: [individual_deviation_depth, net_income_growth]
+    # individual_deviation_depth = 個別下限をどれだけ下抜けたか（針の鋭さ）
+    sector_relative: false     # trueで同一セクター内の最深掘り銘柄を優先
+
+# =============================================================
+#  売り/手仕舞い監視（保有銘柄用・新規スクリーニングとは別モジュール）
+# =============================================================
+exit_monitor:
+  enabled: true
+  no_new_high_within_months: 6   # 半年、上場来高値を更新しなくなった
+  lower_low_vs_prev_crash: true  # 前回暴落点に比べ現行暴落点で安値切り下げ
+  earnings_turned_negative: true # 売上 or 純利益の変化率がマイナス転落
+
+# =============================================================
+#  資金管理・逆指値プラン（ポジション管理モジュール）
+#  逆指値位置は買値比%。例) -10 = 買値の-10%地点に逆指値
+# =============================================================
+position_management:
+  no_stop_loss_days: 90          # 買付後この日数は逆指値を置かない
+  stop_rules:                    # 含み損益帯(%) ごとの逆指値位置
+    - { pl_from: -999, pl_to: -10, action: "損切り(成行)" }
+    - { pl_from: -10,  pl_to: 30,  stop_at_buy_pct: -10 }
+    - { pl_from: 30,   pl_to: 50,  stop_at_buy_pct: 0   }  # 同値撤退
+    - { pl_from: 50,   pl_to: 100, stop_at_buy_pct: 10  }
+    - { pl_from: 100,  pl_to: 999, stop_at_buy_pct: 20  }  # 以降は放置
+  half_profit:
+    enabled: true
+    min_shares: 200              # 200株以上のとき
+    trigger_pl_pct: 100          # 含み益+100%で半分利確
+  small_account_no_half_profit: true  # 小資金は半益せず損小利大に徹する
+
+# =============================================================
+#  データソース（層ごとに切替可能）
+# =============================================================
+data_sources:
+  fundamentals: jquants         # jquants | edinet
+  universe_prices: jquants      # 母集団の月足: jquants(12週遅延でも可)
+  trigger_prices: yfinance      # トリガーは準リアルタイムが必要
+  cache_db: "./data/cache.duckdb"
+
+# ---- 出力 ----
+output:
+  format: [csv, console]        # csv | console | line | discord
+  csv_path: "./out/candidates.csv"
+  pool_path: "./out/pool.csv"
+  notify_webhook: null          # LINE/Discord Webhook URL
+
+# =============================================================
+#  Webダッシュボード
+# =============================================================
+dashboard:
+  warning_deviation_pct: -7      # 黄信号ライン
+  danger_deviation_pct: -10      # 赤信号ライン（trigger.market.threshold_pctと同値）
+  price_lookback_days: 60        # 乖離率計算の価格取得日数
+  cache_ttl_minutes: 60          # Streamlitキャッシュ有効期間（分）
+  fresh_touch_highlight_days: 90 # 直近この日数以内の発火をバナー表示
