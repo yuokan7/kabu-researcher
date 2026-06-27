@@ -116,6 +116,8 @@ def get_all_statements_bulk(
     today = date.today()
     check_date = today.replace(day=1) - timedelta(days=1)  # 先月末
 
+    _debug_printed = False  # 最初の1件だけフィールド名をデバッグ出力
+
     for month_idx in range(lookback_months):
         date_str = check_date.strftime("%Y-%m-%d")
 
@@ -132,7 +134,12 @@ def get_all_statements_bulk(
                 time.sleep(wait)
                 continue
             if r.status_code == 200:
-                stmts = _parse_statements(r.json().get("data", []))
+                data = r.json().get("data", [])
+                if not _debug_printed and data:
+                    print(f"  [DEBUG] {date_str} サンプル1件のキー: {list(data[0].keys())}")
+                    print(f"  [DEBUG] サンプルデータ: {data[0]}")
+                    _debug_printed = True
+                stmts = _parse_statements(data)
                 for stmt in stmts:
                     if stmt.code not in result:
                         result[stmt.code] = []
