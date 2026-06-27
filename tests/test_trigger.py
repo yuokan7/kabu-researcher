@@ -61,7 +61,7 @@ def test_detect_second_touch_after_90_days():
     first = pd.bdate_range("2020-01-02", periods=1)
     gap = pd.bdate_range("2020-01-03", periods=90)
     second = pd.bdate_range("2020-06-01", periods=1)
-    idx = first.append(gap).append(second)
+    idx = first.union(gap).union(second)
     values = [-11.0] + [-5.0] * 90 + [-12.0]
     dev = pd.Series(values, index=idx)
     signals = detect_fresh_touches(dev, threshold_pct=-10.0, fresh_touch_min_days=90)
