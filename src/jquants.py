@@ -2,6 +2,7 @@ import os
 import time
 import requests
 from dataclasses import dataclass
+from datetime import date, timedelta
 
 
 _BASE = "https://api.jquants.com/v2"
@@ -72,28 +73,8 @@ def get_listed_stocks(id_token: str, markets: list[str]) -> list[StockInfo]:
     return stocks
 
 
-def get_statements_for_code(id_token: str, code: str) -> list[FinancialStatement]:
-    """特定銘柄の財務諸表（通期のみ）を取得する。429時は最大3回リトライ。"""
-    for attempt in range(3):
-        r = requests.get(
-            f"{_BASE}/fins/summary",
-            headers=_headers(id_token),
-            params={"code": code},
-            timeout=30,
-        )
-        if r.status_code == 429:
-            wait = 2 ** attempt * 5  # 5s → 10s → 20s
-            print(f"  [WARN] {code}: HTTP 429 (rate limit) — {wait}s待機して再試行")
-            time.sleep(wait)
-            continue
-        if r.status_code != 200:
-            print(f"  [WARN] {code}: HTTP {r.status_code}")
-            return []
-        break
-    else:
-        print(f"  [WARN] {code}: 3回リトライ失敗")
-        return []
-
+def _parse_statements(data: list[dict]) -> list[FinancialStatement]:
+    """APIレスポンスのリストから FinancialStatement のリストを生成する。"""
     def _f(v) -> float | None:
         try:
             return float(v) if v not in (None, "", "－", "-") else None
@@ -101,11 +82,12 @@ def get_statements_for_code(id_token: str, code: str) -> list[FinancialStatement
             return None
 
     results = []
-    for item in r.json().get("data", []):
-        # 通期（FY）のみ対象
+    for item in data:
         if item.get("CurPerType") != "FY":
             continue
-        # 期末日から年月を取得
+        code = item.get("LocalCode", item.get("Code", ""))
+        if len(code) == 5:
+            code = code[:4]
         period_end = item.get("CurPerEn", item.get("DiscDate", ""))
         period = period_end[:7] if period_end else ""
         results.append(FinancialStatement(
@@ -115,19 +97,73 @@ def get_statements_for_code(id_token: str, code: str) -> list[FinancialStatement
             net_income=_f(item.get("Profit")),
             operating_cf=_f(item.get("CFO")),
         ))
-    return sorted(results, key=lambda s: s.period)
+    return results
 
 
+def get_all_statements_bulk(
+    id_token: str,
+    lookback_months: int = 36,
+    delay_sec: float = 1.0,
+) -> dict[str, list[FinancialStatement]]:
+    """
+    日付ベースで全銘柄の財務諸表を一括取得する。
+    1銘柄ずつ叩く代わりに、開示日ベースでまとめて取得するため
+    APIコール数が大幅に削減される（4000回 → 約36回）。
+    """
+    result: dict[str, list[FinancialStatement]] = {}
+
+    # 過去 lookback_months ヶ月の月末日をイテレート
+    today = date.today()
+    check_date = today.replace(day=1) - timedelta(days=1)  # 先月末
+
+    for month_idx in range(lookback_months):
+        date_str = check_date.strftime("%Y-%m-%d")
+
+        for attempt in range(3):
+            r = requests.get(
+                f"{_BASE}/fins/summary",
+                headers=_headers(id_token),
+                params={"date": date_str},
+                timeout=60,
+            )
+            if r.status_code == 429:
+                wait = 2 ** attempt * 10
+                print(f"  [WARN] {date_str}: HTTP 429 — {wait}s待機")
+                time.sleep(wait)
+                continue
+            if r.status_code == 200:
+                stmts = _parse_statements(r.json().get("data", []))
+                for stmt in stmts:
+                    if stmt.code not in result:
+                        result[stmt.code] = []
+                    result[stmt.code].append(stmt)
+            break
+
+        if month_idx > 0 and month_idx % 6 == 0:
+            print(f"  財務データ取得中... {month_idx}/{lookback_months}ヶ月")
+
+        # 前月末へ
+        check_date = check_date.replace(day=1) - timedelta(days=1)
+        time.sleep(delay_sec)
+
+    # 各銘柄の statements を period 昇順にソートして重複除去
+    for code in result:
+        seen = set()
+        deduped = []
+        for stmt in sorted(result[code], key=lambda s: s.period):
+            if stmt.period not in seen:
+                seen.add(stmt.period)
+                deduped.append(stmt)
+        result[code] = deduped
+
+    return result
+
+
+# 後方互換性のため旧関数も残す（直接呼び出しは非推奨）
 def get_all_statements(
     id_token: str,
     codes: list[str],
-    delay_sec: float = 0.3,
+    delay_sec: float = 1.0,
 ) -> dict[str, list[FinancialStatement]]:
-    """複数銘柄の財務諸表を一括取得する（レート制限対策のdelay付き）。"""
-    result: dict[str, list[FinancialStatement]] = {}
-    for i, code in enumerate(codes):
-        if i > 0 and i % 100 == 0:
-            print(f"  財務データ取得中... {i}/{len(codes)}")
-        result[code] = get_statements_for_code(id_token, code)
-        time.sleep(delay_sec)  # 1.0秒推奨（無料プランのレート制限対策）
-    return result
+    """非推奨: get_all_statements_bulk を使うこと。"""
+    return get_all_statements_bulk(id_token, lookback_months=36, delay_sec=delay_sec)

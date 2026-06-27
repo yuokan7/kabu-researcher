@@ -25,7 +25,7 @@ except ImportError:
 import pandas as pd
 
 from src.config import load_config
-from src.jquants import get_id_token, get_listed_stocks, get_all_statements
+from src.jquants import get_id_token, get_listed_stocks, get_all_statements_bulk
 from src.fundamentals import filter_by_fundamentals
 from src.trend import apply_trend_filter
 from src.fetch import fetch_daily_close
@@ -74,12 +74,11 @@ def main() -> None:
     stocks = get_listed_stocks(id_token, markets)
     print(f"  {len(stocks)}銘柄取得")
 
-    # Step 3: 財務データ取得
-    print(f"\n[3/5] 財務データ取得中（{len(stocks)}銘柄）...")
-    codes = [s.code for s in stocks]
+    # Step 3: 財務データ取得（日付ベース一括取得 — APIコール数を大幅削減）
+    print("\n[3/5] 財務データ取得中（過去3年分を月次一括取得）...")
     names = {s.code: s.name for s in stocks}
-    statements = get_all_statements(id_token, codes, delay_sec=1.0)
-    print("  取得完了")
+    statements = get_all_statements_bulk(id_token, lookback_months=36, delay_sec=1.0)
+    print(f"  取得完了（{len(statements)}銘柄分）")
 
     # Step 4a: 第1層 業績フィルタ
     print("\n[4a/5] 第1層: 業績フィルタ...")
