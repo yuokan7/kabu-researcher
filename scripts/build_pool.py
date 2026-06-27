@@ -85,8 +85,8 @@ def main() -> None:
     l1_passed = filter_by_fundamentals(
         statements=statements,
         names=names,
-        min_revenue_yoy_pct=20.0,
-        min_income_yoy_pct=20.0,
+        min_revenue_yoy_pct=15.0,
+        min_income_yoy_pct=15.0,
         consecutive_periods=3,
         require_positive_cf=True,
     )

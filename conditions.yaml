@@ -15,10 +15,10 @@ universe:
 # =============================================================
 fundamentals:
   revenue_growth:              # 売上高
-    min_yoy_pct: 20            # 前年比成長率の下限(%)
+    min_yoy_pct: 15            # 前年比成長率の下限(%)（元は20%）
     consecutive_periods: 3     # 直近この期数すべてを満たす
   net_income_growth:           # 純利益
-    min_yoy_pct: 20
+    min_yoy_pct: 15
     consecutive_periods: 3
   require_positive_operating_cf: true   # 営業CFがプラス
   cf_quality:                  # 粉飾除外: 営業利益と営業CFが離れすぎない
