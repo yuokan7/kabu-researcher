@@ -5,8 +5,9 @@
 # DuckDBキャッシュ（再生成可能）
 data/
 
-# 出力ファイル
-out/
+# 出力ファイル（pool.csv は除く）
+out/candidates.csv
+out/*.csv.bak
 
 # Python
 __pycache__/
