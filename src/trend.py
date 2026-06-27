@@ -69,17 +69,19 @@ def check_higher_highs_lows(
     高値・安値の切り上げ判定。
     局所的な高値・安値がそれぞれ単調増加していればTrue。
     """
-    if len(monthly) < 3:
+    if len(monthly) < swing_window * 2 + 1:
         return False
 
     highs, lows = [], []
     arr = monthly.values
+    w = swing_window
 
-    # Find local peaks and valleys
-    for i in range(1, len(arr) - 1):
-        if arr[i] > arr[i - 1] and arr[i] > arr[i + 1]:
+    # swing_window 月分の窓で局所高値・安値を検出
+    for i in range(w, len(arr) - w):
+        window = arr[i - w: i + w + 1]
+        if arr[i] == max(window):
             highs.append(arr[i])
-        if arr[i] < arr[i - 1] and arr[i] < arr[i + 1]:
+        if arr[i] == min(window):
             lows.append(arr[i])
 
     if len(highs) < min_swings or len(lows) < min_swings:

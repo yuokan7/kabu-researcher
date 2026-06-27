@@ -41,14 +41,15 @@ def test_check_perfect_order_false_when_declining():
 # --- check_higher_highs_lows ---
 
 def test_check_higher_highs_lows_true():
-    # 明確な切り上げ波形
-    vals = [100, 110, 105, 115, 108, 120, 112, 130]
+    # swing_window=2 で高値・安値ともに切り上げ
+    # highs: 110 → 125, lows: 75 → 80
+    vals = [70, 80, 110, 75, 85, 125, 80, 90, 140, 85]
     prices = _monthly([float(v) for v in vals])
     assert check_higher_highs_lows(prices, swing_window=2, min_swings=2) is True
 
 def test_check_higher_highs_lows_false_when_lower_low():
-    # 安値が切り下がっている
-    vals = [100, 110, 90, 115, 80, 120]
+    # 安値が切り下がっている（75 → 65）
+    vals = [70, 80, 110, 75, 85, 125, 65, 90, 130, 80]
     prices = _monthly([float(v) for v in vals])
     assert check_higher_highs_lows(prices, swing_window=2, min_swings=2) is False
 
