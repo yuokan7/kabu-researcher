@@ -34,9 +34,9 @@ def _headers(api_key: str) -> dict[str, str]:
     return {"x-api-key": api_key}
 
 
-def get_id_token(email: str, password: str) -> str:
-    """後方互換性のためのラッパー。V2ではAPIキーを直接使うため、
-    環境変数 JQUANTS_API_KEY を返す。email/passwordは使用しない。"""
+def get_id_token(_email: str = "", _password: str = "") -> str:
+    """V2 APIキー方式のラッパー。引数は後方互換性のために残すが使用しない。
+    環境変数 JQUANTS_API_KEY からAPIキーを読む。"""
     api_key = os.environ.get("JQUANTS_API_KEY", "")
     if not api_key:
         raise ValueError(
@@ -81,6 +81,7 @@ def get_statements_for_code(id_token: str, code: str) -> list[FinancialStatement
         timeout=30,
     )
     if r.status_code != 200:
+        print(f"  [WARN] {code}: HTTP {r.status_code}")
         return []
 
     def _f(v) -> float | None:
