@@ -283,9 +283,12 @@ else:
                 growth_data[str(prow["symbol"])] = {
                     "rev": prow.get("revenue_growth_pct"),
                     "inc": prow.get("net_income_growth_pct"),
+                    "thr": prow.get("individual_threshold_pct"),
                 }
         except Exception:
             pass
+
+    nikkei_fired = (dev is not None and dev <= _DANGER)  # 日経が買い場か
 
     for row in data.rows:
         th_r = _THEME.get(row.status, _THEME["no_data"])
@@ -293,7 +296,9 @@ else:
         price_r = _yen(row.current_price)
         unit_r  = _yen(row.current_price * 100) if row.current_price is not None else "—"
         tv_url  = _tradingview_url(row.symbol)
-        gd = growth_data.get(row.symbol, {})
+        gd  = growth_data.get(row.symbol, {})
+        thr = gd.get("thr")  # 個別下限（例: -9.3）
+
         rev = f"売上 +{gd['rev']:.0f}%" if gd.get("rev") is not None else ""
         inc = f"純利益 +{gd['inc']:.0f}%" if gd.get("inc") is not None else ""
         growth_str = " ／ ".join(x for x in [rev, inc] if x)
@@ -301,6 +306,35 @@ else:
             f'<div style="font-size:12px;color:#4488cc;font-weight:700;margin-top:4px;">📈 前年比 {growth_str}</div>'
             if growth_str else ""
         )
+
+        # 個別株も自分の下限に到達しているか
+        stock_fired = (
+            thr is not None
+            and row.current_deviation_pct is not None
+            and row.current_deviation_pct <= thr
+        )
+        # 両条件達成バッジ
+        if nikkei_fired and stock_fired:
+            dual_badge = '<span style="background:#c00020;color:#fff;font-weight:900;font-size:13px;padding:4px 12px;border-radius:20px;border:2px solid #ff4060;margin-left:8px;">🔥 両条件達成！</span>'
+        elif stock_fired:
+            dual_badge = '<span style="background:#cc6600;color:#fff;font-weight:900;font-size:12px;padding:3px 10px;border-radius:20px;border:2px solid #ff8800;margin-left:8px;">⚡ 個別も底値圏</span>'
+        else:
+            dual_badge = ""
+
+        # 個別下限の表示
+        if thr is not None:
+            thr_str = f"{thr:+.1f}%"
+            thr_color = "#f05060" if stock_fired else "#778899"
+            thr_html = (
+                f'<div style="font-size:11px;color:#778899;font-weight:700;">この株の買い場ライン</div>'
+                f'<div style="font-size:18px;font-weight:900;color:{thr_color};">{thr_str}</div>'
+                f'<div style="font-size:10px;color:#99aacc;">過去10年の実績から算出</div>'
+            )
+        else:
+            thr_html = (
+                f'<div style="font-size:11px;color:#778899;font-weight:700;">買い場ライン</div>'
+                f'<div style="font-size:15px;color:#aabbcc;">算出中</div>'
+            )
 
         profit = _recovery_profit_100(row.current_price, row.current_deviation_pct)
         if profit is not None and profit > 0:
@@ -319,14 +353,17 @@ else:
                 f'</div>'
             )
 
+        border_extra = "border:3px solid #f05060;" if (nikkei_fired and stock_fired) else ""
+
         st.markdown(
-            f'<div class="puyo-card" style="background:{th_r["bg"]};border-color:{th_r["brd"]};'
+            f'<div class="puyo-card" style="background:{th_r["bg"]};border-color:{th_r["brd"]};{border_extra}'
             f'box-shadow:0 5px 0 {th_r["brd"]},0 7px 18px #00000014;">'
             f'<div class="card-row">'
 
             f'<div class="card-name">'
             f'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
             f'<span style="font-size:17px;font-weight:900;color:#1a2a3a;">{row.name}</span>'
+            f'{dual_badge}'
             f'<span class="badge" style="background:{th_r["badge_bg"]};color:{th_r["txt"]};border-color:{th_r["brd"]};">'
             f'{_ROW_LABEL.get(row.status,"")}</span>'
             f'</div>'
@@ -343,6 +380,10 @@ else:
             f'<div class="card-metric">'
             f'<div style="font-size:11px;color:#778899;font-weight:700;">25日平均との差</div>'
             f'<div style="font-size:22px;text-shadow:0 2px 0 {th_r["brd"]};">{dev_r}</div>'
+            f'</div>'
+
+            f'<div class="card-metric">'
+            f'{thr_html}'
             f'</div>'
 
             f'{profit_html}'

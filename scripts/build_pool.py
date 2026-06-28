@@ -29,7 +29,7 @@ from src.jquants import get_id_token, get_listed_stocks, get_all_statements_bulk
 from src.fundamentals import filter_by_fundamentals
 from src.trend import apply_trend_filter
 from src.fetch import fetch_daily_close
-from src.trigger import calc_deviation
+from src.trigger import calc_deviation, calibrate_individual_threshold
 
 _PROJECT_ROOT = Path(__file__).parent.parent
 _CONFIG_PATH  = _PROJECT_ROOT / "conditions.yaml"
@@ -115,18 +115,35 @@ def main() -> None:
         print("  [WARNING] 0銘柄通過。既存のpool.csvを維持します")
         return
 
-    # Step 5: 乖離率計算 → TOP10
-    print(f"\n[5/5] 乖離率計算 → TOP{_TOP_N}選定...")
+    # Step 5: 乖離率計算 + 個別下限キャリブレ → TOP10
+    print(f"\n[5/5] 乖離率計算・個別下限キャリブレ → TOP{_TOP_N}選定...")
     rows = []
+    cal_cfg = cfg  # conditions.yaml から calibration パラメータを参照
     for stock in l2_passed:
-        dev = _get_current_deviation(stock.symbol, db_path)
-        name = stock.name or stock.symbol  # 名前がなければシンボルコードを使用
+        dev  = _get_current_deviation(stock.symbol, db_path)
+        name = stock.name or stock.symbol
+
+        # 個別下限キャリブレ（過去10年で10〜20回タッチする下限を算出）
+        threshold = calibrate_individual_threshold(
+            symbol=stock.symbol,
+            lookback_years=10,
+            window=25,
+            base_percentile=3.0,
+            target_touch_min=10,
+            target_touch_max=20,
+            fresh_touch_min_days=90,
+            fallback=-10.0,
+            db_path=db_path,
+        )
+        print(f"  {stock.symbol} {name}: 個別下限={threshold:.2f}%")
+
         rows.append({
             "symbol": stock.symbol,
             "name": name,
             "revenue_growth_pct": round(stock.revenue_growth_pct, 1),
             "net_income_growth_pct": round(stock.net_income_growth_pct, 1),
             "current_deviation_pct": round(dev, 2) if dev is not None else None,
+            "individual_threshold_pct": threshold,
         })
 
     # 乖離率深い順（None は末尾）、TOP10
@@ -141,7 +158,8 @@ def main() -> None:
     print(f"\n=== 完了: {len(top10)}銘柄を pool.csv に書き出しました ===")
     for r in top10:
         dev_str = f"{r['current_deviation_pct']:+.2f}%" if r["current_deviation_pct"] is not None else "—"
-        print(f"  {r['symbol']} {r['name']}  売上+{r['revenue_growth_pct']}%  利益+{r['net_income_growth_pct']}%  乖離率{dev_str}")
+        thr_str = f"{r['individual_threshold_pct']:+.2f}%"
+        print(f"  {r['symbol']} {r['name']}  乖離率{dev_str} / 個別下限{thr_str}")
 
 
 if __name__ == "__main__":
