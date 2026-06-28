@@ -81,6 +81,18 @@ def main() -> None:
     print(f"  取得完了（{len(statements)}銘柄分）")
 
     # Step 4a: 第1層 業績フィルタ
+    # ─── デバッグ: 財務データの中身を確認 ───
+    valid_count = sum(
+        1 for stmts in statements.values()
+        if any(s.net_sales is not None for s in stmts)
+    )
+    print(f"\n[DEBUG] 財務データあり銘柄: {valid_count}/{len(statements)}")
+    for code, stmts in list(statements.items())[:3]:
+        print(f"  [DEBUG] {code} ({names.get(code, '?')}): {len(stmts)}期")
+        for s in stmts[-3:]:
+            print(f"    period={s.period} sales={s.net_sales} income={s.net_income} cf={s.operating_cf}")
+    # ─────────────────────────────────────
+
     print("\n[4a/5] 第1層: 業績フィルタ...")
     l1_passed = filter_by_fundamentals(
         statements=statements,
