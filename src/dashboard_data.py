@@ -64,6 +64,9 @@ def load_watchlist(pool_path: str | Path) -> list[tuple[str, str]]:
     if not path.exists():
         return []
     df = pd.read_csv(path, usecols=["symbol", "name"])
+    # 名前が空（NaN）のときはシンボルコードをそのまま表示
+    df["name"] = df["name"].fillna(df["symbol"])
+    df["name"] = df["name"].replace("", None).fillna(df["symbol"])
     return list(zip(df["symbol"], df["name"]))
 
 

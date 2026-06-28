@@ -119,9 +119,18 @@ def main() -> None:
     rows = []
     for stock in l2_passed:
         dev = _get_current_deviation(stock.symbol, db_path)
+        # 名前が空の場合はyfinanceから取得を試みる
+        name = stock.name
+        if not name:
+            try:
+                import yfinance as yf
+                info = yf.Ticker(stock.symbol).info
+                name = info.get("longName") or info.get("shortName") or stock.symbol
+            except Exception:
+                name = stock.symbol
         rows.append({
             "symbol": stock.symbol,
-            "name": stock.name,
+            "name": name,
             "revenue_growth_pct": round(stock.revenue_growth_pct, 1),
             "net_income_growth_pct": round(stock.net_income_growth_pct, 1),
             "current_deviation_pct": round(dev, 2) if dev is not None else None,
