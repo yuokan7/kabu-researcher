@@ -133,6 +133,20 @@ def _earnings_season_dates(years_back: int = 4) -> list[str]:
     return sorted(dates, reverse=True)  # 新しい順
 
 
+def get_all_names(id_token: str) -> dict[str, str]:
+    """全市場の銘柄コード→日本語名の辞書を返す（市場フィルタなし）。"""
+    r = requests.get(f"{_BASE}/equities/master", headers=_headers(id_token), timeout=30)
+    if r.status_code != 200:
+        return {}
+    result = {}
+    for item in r.json().get("data", []):
+        code = item.get("Code", "")
+        if len(code) == 5:
+            code = code[:4]
+        result[code] = item.get("CoName", "")
+    return result
+
+
 def get_all_statements_bulk(
     id_token: str,
     lookback_months: int = 36,   # 後方互換のため引数は残すが未使用

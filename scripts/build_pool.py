@@ -25,7 +25,7 @@ except ImportError:
 import pandas as pd
 
 from src.config import load_config
-from src.jquants import get_id_token, get_listed_stocks, get_all_statements_bulk
+from src.jquants import get_id_token, get_listed_stocks, get_all_statements_bulk, get_all_names
 from src.fundamentals import filter_by_fundamentals
 from src.trend import apply_trend_filter
 from src.fetch import fetch_daily_close
@@ -72,11 +72,12 @@ def main() -> None:
     print("\n[2/5] 全上場銘柄リスト取得...")
     markets = ["プライム", "スタンダード", "グロース"]
     stocks = get_listed_stocks(id_token, markets)
-    print(f"  {len(stocks)}銘柄取得")
+    # 日本語名辞書は全市場分（財務フィルタで他市場の銘柄も通る可能性があるため）
+    names = get_all_names(id_token)
+    print(f"  {len(stocks)}銘柄取得（名前辞書: {len(names)}件）")
 
     # Step 3: 財務データ取得（日付ベース一括取得 — APIコール数を大幅削減）
     print("\n[3/5] 財務データ取得中（過去3年分を月次一括取得）...")
-    names = {s.code: s.name for s in stocks}
     statements = get_all_statements_bulk(id_token, lookback_months=36, delay_sec=1.0)
     print(f"  取得完了（{len(statements)}銘柄分）")
 
@@ -119,15 +120,7 @@ def main() -> None:
     rows = []
     for stock in l2_passed:
         dev = _get_current_deviation(stock.symbol, db_path)
-        # 名前が空の場合はyfinanceから取得を試みる
-        name = stock.name
-        if not name:
-            try:
-                import yfinance as yf
-                info = yf.Ticker(stock.symbol).info
-                name = info.get("longName") or info.get("shortName") or stock.symbol
-            except Exception:
-                name = stock.symbol
+        name = stock.name or stock.symbol  # 名前がなければシンボルコードを使用
         rows.append({
             "symbol": stock.symbol,
             "name": name,
