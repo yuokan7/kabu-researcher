@@ -66,7 +66,7 @@ trigger:
   deviation_window: 25
   market:                      # 地合い暴落点（日経）
     index_symbol: "^N225"
-    threshold_pct: -10         # 初心者:-10 / 上級:-7
+    threshold_pct: -7          # 初心者:-10 / 上級:-7
     fresh_touch_min_days: 90   # 前回タッチから3か月以上空けて初タッチ
     entry_on_first_touch: true # 最初に閾値タッチした日に固定（深掘りを待たない）
   individual:                  # 個別暴落点
@@ -132,7 +132,7 @@ output:
 # =============================================================
 dashboard:
   warning_deviation_pct: -7      # 黄信号ライン
-  danger_deviation_pct: -10      # 赤信号ライン（trigger.market.threshold_pctと同値）
+  danger_deviation_pct: -7       # 赤信号ライン（trigger.market.threshold_pctと同値）
   price_lookback_days: 60        # 乖離率計算の価格取得日数
   cache_ttl_minutes: 60          # Streamlitキャッシュ有効期間（分）
   fresh_touch_highlight_days: 90 # 直近この日数以内の発火をバナー表示
