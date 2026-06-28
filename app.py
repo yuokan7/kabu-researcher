@@ -1,4 +1,4 @@
-from datetime import date
+﻿from datetime import date
 from pathlib import Path
 
 import pandas as pd
@@ -10,7 +10,7 @@ from src.dashboard_data import DashboardData, build_dashboard_data
 _PROJECT_ROOT = Path(__file__).parent
 _CONFIG_PATH = _PROJECT_ROOT / "conditions.yaml"
 
-st.set_page_config(page_title="株リサーチャー", layout="wide")
+st.set_page_config(page_title="譬ｪ繝ｪ繧ｵ繝ｼ繝√Ε繝ｼ", layout="wide")
 
 st.markdown("""
 <style>
@@ -23,7 +23,7 @@ st.markdown("""
   [data-testid="stHeader"] { background: transparent; }
   .block-container { padding-top: 1.4rem; padding-bottom: 2rem; max-width: 1100px; }
 
-  /* ふきだし風ボタン */
+  /* 縺ｵ縺阪□縺鈴｢ｨ繝懊ち繝ｳ */
   .stButton > button {
     background: linear-gradient(180deg, #ffe066 0%, #ffb800 100%);
     color: #6b3a00; font-weight: 900; font-size: 14px;
@@ -38,7 +38,7 @@ st.markdown("""
   hr { border-color: #b8e8f8 !important; }
   a { color: inherit !important; text-decoration: none !important; }
 
-  /* expander: 黒背景・白文字 */
+  /* expander: 鮟定レ譎ｯ繝ｻ逋ｽ譁・ｭ・*/
   [data-testid="stExpander"] {
     background: #1a1e2e !important; border-radius: 14px !important;
     border: 2px solid #3a4060 !important;
@@ -52,7 +52,7 @@ st.markdown("""
   [data-testid="stExpanderDetails"] strong { color: #e8eeff !important; }
   [data-testid="stExpanderDetails"] h4 { color: #a0c4ff !important; }
 
-  /* 汎用カード */
+  /* 豎守畑繧ｫ繝ｼ繝・*/
   .puyo-card {
     border-radius: 20px; padding: 18px 20px; margin-bottom: 14px;
     border: 3px solid; position: relative; overflow: hidden;
@@ -63,25 +63,25 @@ st.markdown("""
     border-radius: 18px 18px 0 0; pointer-events: none;
   }
 
-  /* タイトル */
+  /* 繧ｿ繧､繝医Ν */
   .app-title {
     font-size: clamp(20px, 5vw, 34px); font-weight: 900; color: #fff;
     text-shadow: 0 3px 0 #1a88c0, 0 5px 12px #0060a044;
     letter-spacing: -0.5px; margin: 0;
   }
 
-  /* ヒーロー数字 */
+  /* 繝偵・繝ｭ繝ｼ謨ｰ蟄・*/
   .hero-num {
     font-size: clamp(44px, 14vw, 74px); font-weight: 900; line-height: 1; letter-spacing: -2px;
   }
 
-  /* ラベルバッジ */
+  /* 繝ｩ繝吶Ν繝舌ャ繧ｸ */
   .badge {
     display: inline-block; font-size: 12px; font-weight: 900;
     padding: 3px 12px; border-radius: 20px; border: 2px solid;
   }
 
-  /* カードレイアウト */
+  /* 繧ｫ繝ｼ繝峨Ξ繧､繧｢繧ｦ繝・*/
   .card-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
   .card-name   { flex: 3 1 160px; }
   .card-metric { flex: 1 1 90px; text-align: center; }
@@ -101,18 +101,17 @@ _TTL     = cfg.dashboard.cache_ttl_minutes * 60
 _WARNING = cfg.dashboard.warning_deviation_pct  # -7
 _DANGER  = cfg.dashboard.danger_deviation_pct   # -10
 
-# ぷよぷよ配色: 待機=紫っぽい青 / もうすぐ=緑 / 買い場=赤（ぷよの発火色）
-_THEME = {
+# 縺ｷ繧医・繧磯・濶ｲ: 蠕・ｩ・邏ｫ縺｣縺ｽ縺・搨 / 繧ゅ≧縺吶＄=邱・/ 雋ｷ縺・ｴ=襍､・医・繧医・逋ｺ轣ｫ濶ｲ・・_THEME = {
     "normal":  {"col":"#5b6ef5", "bg":"#eef0ff", "brd":"#8090f8", "badge_bg":"#d8dcff", "txt":"#2030c0"},
     "warning": {"col":"#19c07a", "bg":"#e8faf2", "brd":"#52d89e", "badge_bg":"#c4f5de", "txt":"#0a7a4a"},
     "danger":  {"col":"#f53c5b", "bg":"#fff0f3", "brd":"#f87090", "badge_bg":"#ffd0db", "txt":"#c0001e"},
     "no_data": {"col":"#aaaaaa", "bg":"#f5f5f5", "brd":"#cccccc", "badge_bg":"#e8e8e8", "txt":"#777"},
 }
-_ROW_LABEL = {"normal": "⏳ 待機中", "warning": "👀 そろそろ！", "danger": "🎯 買い場！", "no_data": "—"}
+_ROW_LABEL = {"normal": "竢ｳ 蠕・ｩ滉ｸｭ", "warning": "操 縺昴ｍ縺昴ｍ・・, "danger": "識 雋ｷ縺・ｴ・・, "no_data": "窶・}
 _NIKKEI_TV = "https://www.tradingview.com/chart/?symbol=TVC:NI225"
 
 
-@st.cache_data(ttl=_TTL, show_spinner="データ読み込み中…")
+@st.cache_data(ttl=_TTL, show_spinner="繝・・繧ｿ隱ｭ縺ｿ霎ｼ縺ｿ荳ｭ窶ｦ")
 def _get_data() -> DashboardData:
     return build_dashboard_data(cfg, today=date.today())
 
@@ -122,13 +121,13 @@ def _tradingview_url(symbol: str) -> str:
 
 
 def _yen(v: float | None) -> str:
-    return f"¥{v:,.0f}" if v is not None else "—"
+    return f"ﾂ･{v:,.0f}" if v is not None else "窶・
 
 
 def _signed_dev(dev: float | None) -> str:
-    """乖離率を +/- カラーHTMLで返す。マイナス=赤（割安・チャンス）、プラス=緑（割高）。"""
+    """荵夜屬邇・ｒ +/- 繧ｫ繝ｩ繝ｼHTML縺ｧ霑斐☆縲ゅ・繧､繝翫せ=襍､・亥牡螳峨・繝√Ε繝ｳ繧ｹ・峨√・繝ｩ繧ｹ=邱托ｼ亥牡鬮假ｼ峨・""
     if dev is None:
-        return '<span style="color:#aaa;">—</span>'
+        return '<span style="color:#aaa;">窶・/span>'
     if dev < 0:
         return f'<span style="color:#f05060;font-weight:900;">{dev:+.1f}%</span>'
     return f'<span style="color:#44cc88;font-weight:900;">{dev:+.1f}%</span>'
@@ -143,9 +142,7 @@ def _recovery_profit_100(price: float | None, dev: float | None) -> float | None
 def _dist_bar(dev: float | None, theme: dict, h: int = 16,
               threshold: float | None = None) -> str:
     """
-    買い場までの距離バー。
-    threshold が指定されればその株固有の買い場ライン、なければ _DANGER(-10%) を使う。
-    """
+    雋ｷ縺・ｴ縺ｾ縺ｧ縺ｮ霍晞屬繝舌・縲・    threshold 縺梧欠螳壹＆繧後ｌ縺ｰ縺昴・譬ｪ蝗ｺ譛峨・雋ｷ縺・ｴ繝ｩ繧､繝ｳ縲√↑縺代ｌ縺ｰ _DANGER(-10%) 繧剃ｽｿ縺・・    """
     if dev is None:
         return ""
     thr = threshold if threshold is not None else _DANGER
@@ -161,26 +158,26 @@ def _dist_bar(dev: float | None, theme: dict, h: int = 16,
         f'box-shadow:0 0 8px {col}88;"></div>'
         f'</div>'
         f'<div style="display:flex;justify-content:space-between;font-size:10px;color:#88aac0;margin-top:3px;">'
-        f'<span>いまの安さ</span>'
-        f'<span style="color:{col};font-weight:700;">🎯 買い場 ({thr_label})</span>'
+        f'<span>縺・∪縺ｮ螳峨＆</span>'
+        f'<span style="color:{col};font-weight:700;">識 雋ｷ縺・ｴ ({thr_label})</span>'
         f'</div>'
     )
 
 
-# ─── ヘッダー ─────────────────────────────────────────────────
+# 笏笏笏 繝倥ャ繝繝ｼ 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
 c_ttl, c_btn = st.columns([5, 1])
 with c_ttl:
     st.markdown(
         '<div style="display:flex;align-items:center;gap:12px;">'
         '<div style="width:42px;height:42px;background:linear-gradient(135deg,#5ec8f0,#2a8fd4);'
         'border-radius:12px;border:3px solid #fff;box-shadow:0 3px 8px #00608044;'
-        'display:flex;align-items:center;justify-content:center;font-size:22px;">📈</div>'
-        '<div class="app-title">株リサーチャー</div>'
+        'display:flex;align-items:center;justify-content:center;font-size:22px;">嶋</div>'
+        '<div class="app-title">譬ｪ繝ｪ繧ｵ繝ｼ繝√Ε繝ｼ</div>'
         '</div>',
         unsafe_allow_html=True,
     )
 with c_btn:
-    if st.button("🔄 更新"):
+    if st.button("売 譖ｴ譁ｰ"):
         st.cache_data.clear()
         st.rerun()
 
@@ -189,39 +186,39 @@ data = _get_data()
 m    = data.market
 dev  = m.current_deviation_pct
 
-# ─── ステータス判定 ────────────────────────────────────────────
+# 笏笏笏 繧ｹ繝・・繧ｿ繧ｹ蛻､螳・笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
 if dev is None:
-    status_key, distance_str, phase_label, phase_desc = "no_data", "—", "データなし", ""
+    status_key, distance_str, phase_label, phase_desc = "no_data", "窶・, "繝・・繧ｿ縺ｪ縺・, ""
 elif dev <= _DANGER:
     status_key, distance_str = "danger", "0.0%"
-    phase_label  = "🎯 いまが買い場！"
-    phase_desc   = "日経が割安水準に到達！下の銘柄のチャートを確認して購入を検討しよう！"
+    phase_label  = "識 縺・∪縺瑚ｲｷ縺・ｴ・・
+    phase_desc   = "譌･邨後′蜑ｲ螳画ｰｴ貅悶↓蛻ｰ驕費ｼ∽ｸ九・驫俶氛縺ｮ繝√Ε繝ｼ繝医ｒ遒ｺ隱阪＠縺ｦ雉ｼ蜈･繧呈､懆ｨ弱＠繧医≧・・
 elif dev <= _WARNING:
     status_key   = "warning"
     distance_str = f"{_DANGER - dev:.1f}%"
-    phase_label  = "👀 そろそろ買い場！"
-    phase_desc   = "日経が下落中！下の銘柄をチェックして準備しておこう！"
+    phase_label  = "操 縺昴ｍ縺昴ｍ雋ｷ縺・ｴ・・
+    phase_desc   = "譌･邨後′荳玖誠荳ｭ・∽ｸ九・驫俶氛繧偵メ繧ｧ繝・け縺励※貅門ｙ縺励※縺翫％縺・ｼ・
 else:
     status_key   = "normal"
     distance_str = f"{_DANGER - dev:.1f}%"
-    phase_label  = "⏳ いまは待機"
-    phase_desc   = "まだ買い場ではないよ。日経が下がるのをゆっくり待とう！"
+    phase_label  = "竢ｳ 縺・∪縺ｯ蠕・ｩ・
+    phase_desc   = "縺ｾ縺雋ｷ縺・ｴ縺ｧ縺ｯ縺ｪ縺・ｈ縲よ律邨後′荳九′繧九・繧偵ｆ縺｣縺上ｊ蠕・→縺・ｼ・
 
 th = _THEME[status_key]
-nikkei_txt = (f'日経平均 {_yen(m.current_price)} ／ 25日平均との差 {dev:+.1f}%' if dev is not None else "取得失敗")
+nikkei_txt = (f'譌･邨悟ｹｳ蝮・{_yen(m.current_price)} ・・25譌･蟷ｳ蝮・→縺ｮ蟾ｮ {dev:+.1f}%' if dev is not None else "蜿門ｾ怜､ｱ謨・)
 
-# ─── メインカード ──────────────────────────────────────────────
+# 笏笏笏 繝｡繧､繝ｳ繧ｫ繝ｼ繝・笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
 st.markdown(
     f'<div class="puyo-card" style="background:{th["bg"]};border-color:{th["brd"]};'
     f'box-shadow:0 6px 0 {th["brd"]},0 8px 24px #00000018;">'
 
     f'<div style="font-size:13px;font-weight:700;color:{th["col"]};letter-spacing:1px;margin-bottom:12px;">'
-    f'📊 買い場まであと…（日経平均）</div>'
+    f'投 雋ｷ縺・ｴ縺ｾ縺ｧ縺ゅ→窶ｦ・域律邨悟ｹｳ蝮・ｼ・/div>'
 
     f'<div class="hero-flex" style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:16px;">'
     f'<div style="text-align:center;">'
     f'<span class="hero-num" style="color:{th["col"]};text-shadow:0 4px 0 {th["brd"]};">{distance_str}</span>'
-    f'<div style="font-size:14px;font-weight:700;color:{th["txt"]};margin-top:2px;">下落で買い場</div>'
+    f'<div style="font-size:14px;font-weight:700;color:{th["txt"]};margin-top:2px;">荳玖誠縺ｧ雋ｷ縺・ｴ</div>'
     f'</div>'
     f'<div style="flex:1;min-width:180px;">'
     f'<div style="font-size:22px;font-weight:900;color:{th["txt"]};margin-bottom:6px;">{phase_label}</div>'
@@ -232,7 +229,7 @@ st.markdown(
     f'<span style="font-size:12px;color:#778899;">{nikkei_txt}</span>'
     f'<a href="{_NIKKEI_TV}" target="_blank">'
     f'<span style="font-size:13px;font-weight:700;color:{th["txt"]};background:{th["badge_bg"]};'
-    f'border:2px solid {th["brd"]};border-radius:20px;padding:5px 14px;">📊 日経チャート</span></a>'
+    f'border:2px solid {th["brd"]};border-radius:20px;padding:5px 14px;">投 譌･邨後メ繝｣繝ｼ繝・/span></a>'
     f'</div>'
     f'{_dist_bar(dev, th, h=16)}'
     f'</div>',
@@ -244,43 +241,38 @@ if m.fresh_touch_fired and m.last_signal_date:
     st.markdown(
         f'<div class="puyo-card" style="background:{rt["bg"]};border-color:{rt["brd"]};'
         f'box-shadow:0 6px 0 {rt["brd"]},0 0 40px #f53c5b44;text-align:center;">'
-        f'<div style="font-size:24px;font-weight:900;color:{rt["txt"]};">🎯 3か月ぶりの買いシグナル発火！！</div>'
-        f'<div style="font-size:13px;color:#667788;margin-top:6px;">最終発火日: {m.last_signal_date} ／ 下の銘柄のチャートを確認して購入を検討しよう！</div>'
+        f'<div style="font-size:24px;font-weight:900;color:{rt["txt"]};">識 3縺区怦縺ｶ繧翫・雋ｷ縺・す繧ｰ繝翫Ν逋ｺ轣ｫ・・ｼ・/div>'
+        f'<div style="font-size:13px;color:#667788;margin-top:6px;">譛邨ら匱轣ｫ譌･: {m.last_signal_date} ・・荳九・驫俶氛縺ｮ繝√Ε繝ｼ繝医ｒ遒ｺ隱阪＠縺ｦ雉ｼ蜈･繧呈､懆ｨ弱＠繧医≧・・/div>'
         f'</div>',
         unsafe_allow_html=True,
     )
 
-# ─── 使い方 ────────────────────────────────────────────────────
-with st.expander("📖 はじめての方へ — 使い方と用語"):
+# 笏笏笏 菴ｿ縺・婿 笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
+with st.expander("当 縺ｯ縺倥ａ縺ｦ縺ｮ譁ｹ縺ｸ 窶・菴ｿ縺・婿縺ｨ逕ｨ隱・):
     st.markdown(f"""
-**この手法のキホン：好業績の株を「暴落で安くなった時」に仕込む**
+**縺薙・謇区ｳ輔・繧ｭ繝帙Φ・壼･ｽ讌ｭ邵ｾ縺ｮ譬ｪ繧偵梧垓關ｽ縺ｧ螳峨￥縺ｪ縺｣縺滓凾縲阪↓莉戊ｾｼ繧**
 
-- **⏳ いまは待機（青）** … 何もしない。日経が下がるのを待つ
-- **👀 そろそろ！（緑）** … 日経が下落中。下の銘柄をチェックして準備
-- **🎯 いまが買い場（赤）** … 日経が割安水準（{_DANGER:.0f}%）に到達。購入を検討！
+- **竢ｳ 縺・∪縺ｯ蠕・ｩ滂ｼ磯搨・・* 窶ｦ 菴輔ｂ縺励↑縺・よ律邨後′荳九′繧九・繧貞ｾ・▽
+- **操 縺昴ｍ縺昴ｍ・・ｼ育ｷ托ｼ・* 窶ｦ 譌･邨後′荳玖誠荳ｭ縲ゆｸ九・驫俶氛繧偵メ繧ｧ繝・け縺励※貅門ｙ
+- **識 縺・∪縺瑚ｲｷ縺・ｴ・郁ｵ､・・* 窶ｦ 譌･邨後′蜑ｲ螳画ｰｴ貅厄ｼ・_DANGER:.0f}%・峨↓蛻ｰ驕斐りｳｼ蜈･繧呈､懆ｨ趣ｼ・
+**逕ｨ隱槭・諢丞袖**
+- **25譌･蟷ｳ蝮・→縺ｮ蟾ｮ・井ｹ夜屬邇・ｼ・* 窶ｦ 譬ｪ萓｡縺檎峩霑・5譌･縺ｮ蟷ｳ蝮・ｈ繧贋ｽ・荳贋ｸ九＠縺ｦ縺・ｋ縺九ょ､ｧ縺阪￥繝槭う繝翫せ・晄･關ｽ縺ｧ蜑ｲ螳峨・_DANGER:.0f}%縺瑚ｲｷ縺・ｴ縺ｮ逶ｮ螳・- **螢ｲ荳・/ 邏泌茜逶奇ｼ亥燕蟷ｴ豈費ｼ・* 窶ｦ 蜴ｻ蟷ｴ繧医ｊ菴・謌宣聞縺励◆縺九るｫ倥＞縺ｻ縺ｩ螂ｽ讌ｭ邵ｾ
+- **100譬ｪ雉ｼ蜈･鬘・* 窶ｦ 譌･譛ｬ譬ｪ縺ｯ蝓ｺ譛ｬ100譬ｪ蜊倅ｽ阪りｳｼ蜈･縺ｫ蠢・ｦ√↑縺翫ｈ縺昴・驥鷹｡・- **蝗槫ｾｩ逶奇ｼ育岼螳会ｼ・* 窶ｦ 迴ｾ蝨ｨ縺ｮ譬ｪ萓｡縺九ｉ25譌･蟷ｳ蝮・∪縺ｧ謌ｻ縺｣縺溷ｴ蜷医・100譬ｪ縺ゅ◆繧雁茜逶願ｦ玖ｾｼ縺ｿ
 
-**用語の意味**
-- **25日平均との差（乖離率）** … 株価が直近25日の平均より何%上下しているか。大きくマイナス＝急落で割安。{_DANGER:.0f}%が買い場の目安
-- **売上 / 純利益（前年比）** … 去年より何%成長したか。高いほど好業績
-- **100株購入額** … 日本株は基本100株単位。購入に必要なおよその金額
-- **回復益（目安）** … 現在の株価から25日平均まで戻った場合の100株あたり利益見込み
-
-**買うときの流れ**
-日経が「🎯 いまが買い場」になる → 下の銘柄から選ぶ → 「📊 チャートを見る」で最終確認 → 100株購入を検討
-
-※ このアプリは投資助言ではありません。最終判断はご自身で。
-    """)
+**雋ｷ縺・→縺阪・豬√ｌ**
+譌･邨後′縲交沁ｯ 縺・∪縺瑚ｲｷ縺・ｴ縲阪↓縺ｪ繧・竊・荳九・驫俶氛縺九ｉ驕ｸ縺ｶ 竊・縲交沒・繝√Ε繝ｼ繝医ｒ隕九ｋ縲阪〒譛邨ら｢ｺ隱・竊・100譬ｪ雉ｼ蜈･繧呈､懆ｨ・
+窶ｻ 縺薙・繧｢繝励Μ縺ｯ謚戊ｳ・勧險縺ｧ縺ｯ縺ゅｊ縺ｾ縺帙ｓ縲よ怙邨ょ愛譁ｭ縺ｯ縺碑・霄ｫ縺ｧ縲・    """)
 
 st.markdown(
     '<div style="font-size:18px;font-weight:900;color:#2060a0;margin:12px 0 4px;">'
-    '📋 監視銘柄</div>'
-    '<div style="font-size:13px;color:#6688aa;margin-bottom:14px;">好業績で上昇トレンドの株を自動選定（毎週土曜更新）。安い順に表示。</div>',
+    '搭 逶｣隕夜釜譟・/div>'
+    '<div style="font-size:13px;color:#6688aa;margin-bottom:14px;">螂ｽ讌ｭ邵ｾ縺ｧ荳頑・繝医Ξ繝ｳ繝峨・譬ｪ繧定・蜍暮∈螳夲ｼ域ｯ朱ｱ蝨滓屆譖ｴ譁ｰ・峨ょｮ峨＞鬆・↓陦ｨ遉ｺ縲・/div>',
     unsafe_allow_html=True,
 )
 
-# ─── 監視銘柄リスト ────────────────────────────────────────────
+# 笏笏笏 逶｣隕夜釜譟・Μ繧ｹ繝・笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏笏
 if not data.rows:
-    st.info("監視銘柄がありません。`out/pool.csv` に銘柄を追加してください。")
+    st.info("逶｣隕夜釜譟・′縺ゅｊ縺ｾ縺帙ｓ縲Ａout/pool.csv` 縺ｫ驫俶氛繧定ｿｽ蜉縺励※縺上□縺輔＞縲・)
 else:
     pool_path = _PROJECT_ROOT / "out" / "pool.csv"
     growth_data: dict[str, dict] = {}
@@ -296,68 +288,65 @@ else:
         except Exception:
             pass
 
-    nikkei_fired = (dev is not None and dev <= _DANGER)  # 日経が買い場か
-
+    nikkei_fired = (dev is not None and dev <= _DANGER)  # 譌･邨後′雋ｷ縺・ｴ縺・
     for row in data.rows:
         th_r = _THEME.get(row.status, _THEME["no_data"])
         dev_r   = _signed_dev(row.current_deviation_pct)
         price_r = _yen(row.current_price)
-        unit_r  = _yen(row.current_price * 100) if row.current_price is not None else "—"
+        unit_r  = _yen(row.current_price * 100) if row.current_price is not None else "窶・
         tv_url  = _tradingview_url(row.symbol)
         gd  = growth_data.get(row.symbol, {})
-        thr = gd.get("thr")  # 個別下限（例: -9.3）
-
-        rev = f"売上 +{gd['rev']:.0f}%" if gd.get("rev") is not None else ""
-        inc = f"純利益 +{gd['inc']:.0f}%" if gd.get("inc") is not None else ""
-        growth_str = " ／ ".join(x for x in [rev, inc] if x)
+        thr = gd.get("thr")  # 蛟句挨荳矩剞・井ｾ・ -9.3・・
+        rev = f"螢ｲ荳・+{gd['rev']:.0f}%" if gd.get("rev") is not None else ""
+        inc = f"邏泌茜逶・+{gd['inc']:.0f}%" if gd.get("inc") is not None else ""
+        growth_str = " ・・".join(x for x in [rev, inc] if x)
         growth_html = (
-            f'<div style="font-size:12px;color:#4488cc;font-weight:700;margin-top:4px;">📈 前年比 {growth_str}</div>'
+            f'<div style="font-size:12px;color:#4488cc;font-weight:700;margin-top:4px;">嶋 蜑榊ｹｴ豈・{growth_str}</div>'
             if growth_str else ""
         )
 
-        # 個別株も自分の下限に到達しているか
-        stock_fired = (
+        # 蛟句挨譬ｪ繧り・蛻・・荳矩剞縺ｫ蛻ｰ驕斐＠縺ｦ縺・ｋ縺・        stock_fired = (
             thr is not None
             and row.current_deviation_pct is not None
             and row.current_deviation_pct <= thr
         )
-        # 両条件達成バッジ
+        # 荳｡譚｡莉ｶ驕疲・繝舌ャ繧ｸ
         if nikkei_fired and stock_fired:
-            dual_badge = '<span style="background:#c00020;color:#fff;font-weight:900;font-size:13px;padding:4px 12px;border-radius:20px;border:2px solid #ff4060;margin-left:8px;">🔥 両条件達成！</span>'
+            dual_badge = '<span style="background:#c00020;color:#fff;font-weight:900;font-size:13px;padding:4px 12px;border-radius:20px;border:2px solid #ff4060;margin-left:8px;">櫨 荳｡譚｡莉ｶ驕疲・・・/span>'
         elif stock_fired:
-            dual_badge = '<span style="background:#cc6600;color:#fff;font-weight:900;font-size:12px;padding:3px 10px;border-radius:20px;border:2px solid #ff8800;margin-left:8px;">⚡ 個別も底値圏</span>'
+            dual_badge = '<span style="background:#cc6600;color:#fff;font-weight:900;font-size:12px;padding:3px 10px;border-radius:20px;border:2px solid #ff8800;margin-left:8px;">笞｡ 蛟句挨繧ょｺ募､蝨・/span>'
         else:
             dual_badge = ""
 
-        # 個別下限の表示
+        # 蛟句挨荳矩剞縺ｮ陦ｨ遉ｺ
         if thr is not None:
             thr_str = f"{thr:+.1f}%"
             thr_color = "#f05060" if stock_fired else "#778899"
             thr_html = (
-                f'<div style="font-size:11px;color:#778899;font-weight:700;">この株の買い場ライン</div>'
+                f'<div style="font-size:11px;color:#778899;font-weight:700;">縺薙・譬ｪ縺ｮ雋ｷ縺・ｴ繝ｩ繧､繝ｳ</div>'
                 f'<div style="font-size:18px;font-weight:900;color:{thr_color};">{thr_str}</div>'
-                f'<div style="font-size:10px;color:#99aacc;">過去10年の実績から算出</div>'
+                f'<div style="font-size:10px;color:#99aacc;">驕主悉10蟷ｴ縺ｮ螳溽ｸｾ縺九ｉ邂怜・</div>'
             )
         else:
             thr_html = (
-                f'<div style="font-size:11px;color:#778899;font-weight:700;">買い場ライン</div>'
-                f'<div style="font-size:15px;color:#aabbcc;">算出中</div>'
+                f'<div style="font-size:11px;color:#778899;font-weight:700;">雋ｷ縺・ｴ繝ｩ繧､繝ｳ</div>'
+                f'<div style="font-size:15px;color:#aabbcc;">邂怜・荳ｭ</div>'
             )
 
         profit = _recovery_profit_100(row.current_price, row.current_deviation_pct)
         if profit is not None and profit > 0:
             profit_html = (
                 f'<div class="card-metric">'
-                f'<div style="font-size:11px;color:#778899;font-weight:700;">回復益(目安)</div>'
+                f'<div style="font-size:11px;color:#778899;font-weight:700;">蝗槫ｾｩ逶・逶ｮ螳・</div>'
                 f'<div style="font-size:16px;font-weight:900;color:#e07800;">+{_yen(profit)}</div>'
-                f'<div style="font-size:10px;color:#99aacc;">平均まで戻れば</div>'
+                f'<div style="font-size:10px;color:#99aacc;">蟷ｳ蝮・∪縺ｧ謌ｻ繧後・</div>'
                 f'</div>'
             )
         else:
             profit_html = (
                 f'<div class="card-metric">'
-                f'<div style="font-size:11px;color:#778899;font-weight:700;">回復益(目安)</div>'
-                f'<div style="font-size:15px;color:#aabbcc;">—</div>'
+                f'<div style="font-size:11px;color:#778899;font-weight:700;">蝗槫ｾｩ逶・逶ｮ螳・</div>'
+                f'<div style="font-size:15px;color:#aabbcc;">窶・/div>'
                 f'</div>'
             )
 
@@ -380,13 +369,13 @@ else:
             f'</div>'
 
             f'<div class="card-metric">'
-            f'<div style="font-size:11px;color:#778899;font-weight:700;">現在値</div>'
+            f'<div style="font-size:11px;color:#778899;font-weight:700;">迴ｾ蝨ｨ蛟､</div>'
             f'<div style="font-size:16px;color:#2a3a4a;font-weight:800;">{price_r}</div>'
-            f'<div style="font-size:10px;color:#99aacc;margin-top:2px;">100株 {unit_r}</div>'
+            f'<div style="font-size:10px;color:#99aacc;margin-top:2px;">100譬ｪ {unit_r}</div>'
             f'</div>'
 
             f'<div class="card-metric">'
-            f'<div style="font-size:11px;color:#778899;font-weight:700;">25日平均との差</div>'
+            f'<div style="font-size:11px;color:#778899;font-weight:700;">25譌･蟷ｳ蝮・→縺ｮ蟾ｮ</div>'
             f'<div style="font-size:22px;text-shadow:0 2px 0 {th_r["brd"]};">{dev_r}</div>'
             f'</div>'
 
@@ -400,7 +389,7 @@ else:
             f'<a href="{tv_url}" target="_blank">'
             f'<div style="background:linear-gradient(180deg,#5ec8f0,#2a8fd4);color:#fff;font-weight:900;font-size:13px;'
             f'border-radius:20px;padding:10px 14px;border:2px solid #1a70b0;'
-            f'box-shadow:0 3px 0 #1a60a0;text-shadow:0 1px 0 #0006;white-space:nowrap;">📊 チャートを見る</div>'
+            f'box-shadow:0 3px 0 #1a60a0;text-shadow:0 1px 0 #0006;white-space:nowrap;">投 繝√Ε繝ｼ繝医ｒ隕九ｋ</div>'
             f'</a></div>'
 
             f'</div>'
@@ -412,7 +401,7 @@ else:
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown(
     f'<div style="text-align:center;font-size:12px;color:#6688aa;padding:8px;">'
-    f'最終更新: {data.as_of}　|　買い場の目安 {_DANGER:.0f}%　|　毎週土曜 0:00 JST 自動更新'
+    f'譛邨よ峩譁ｰ: {data.as_of}縲|縲雋ｷ縺・ｴ縺ｮ逶ｮ螳・{_DANGER:.0f}%縲|縲豈朱ｱ蝨滓屆 0:00 JST 閾ｪ蜍墓峩譁ｰ'
     f'</div>',
     unsafe_allow_html=True,
 )
