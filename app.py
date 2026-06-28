@@ -140,21 +140,29 @@ def _recovery_profit_100(price: float | None, dev: float | None) -> float | None
     return (price / (1 + dev / 100.0) - price) * 100.0
 
 
-def _dist_bar(dev: float | None, theme: dict, h: int = 16) -> str:
+def _dist_bar(dev: float | None, theme: dict, h: int = 16,
+              threshold: float | None = None) -> str:
+    """
+    買い場までの距離バー。
+    threshold が指定されればその株固有の買い場ライン、なければ _DANGER(-10%) を使う。
+    """
     if dev is None:
         return ""
-    fill = max(0.0, min(dev / _DANGER * 100, 100.0))
-    warn = _WARNING / _DANGER * 100
+    thr = threshold if threshold is not None else _DANGER
+    fill = max(0.0, min(dev / thr * 100, 100.0))
     col  = theme["col"]
+    at_target = dev <= thr
+    thr_label = f"{thr:+.1f}%" if threshold is not None else f"{_DANGER:.0f}%"
+    bar_col = col if at_target else "#a0c4ff"
     return (
         f'<div style="position:relative;width:100%;height:{h}px;background:#e0eef8;border-radius:99px;overflow:hidden;'
         f'border:2px solid #c0d8ea;box-shadow:inset 0 2px 4px #0002;">'
         f'<div style="width:{fill:.1f}%;height:100%;background:linear-gradient(90deg,#a0c4ff,{col});border-radius:99px;'
         f'box-shadow:0 0 8px {col}88;"></div>'
-        f'<div style="position:absolute;left:{warn:.1f}%;top:0;height:100%;width:2px;background:#19c07a;opacity:0.7;"></div>'
         f'</div>'
         f'<div style="display:flex;justify-content:space-between;font-size:10px;color:#88aac0;margin-top:3px;">'
-        f'<span>いまの安さ</span><span style="color:{col};font-weight:700;">🎯 買い場 ({_DANGER:.0f}%)</span>'
+        f'<span>いまの安さ</span>'
+        f'<span style="color:{col};font-weight:700;">🎯 買い場 ({thr_label})</span>'
         f'</div>'
     )
 
@@ -396,7 +404,7 @@ else:
             f'</a></div>'
 
             f'</div>'
-            f'<div style="margin-top:12px;">{_dist_bar(row.current_deviation_pct, th_r, h=10)}</div>'
+            f'<div style="margin-top:12px;">{_dist_bar(row.current_deviation_pct, th_r, h=10, threshold=thr)}</div>'
             f'</div>',
             unsafe_allow_html=True,
         )
