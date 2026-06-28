@@ -38,6 +38,20 @@ st.markdown("""
   hr { border-color: #b8e8f8 !important; }
   a { color: inherit !important; text-decoration: none !important; }
 
+  /* expander: 黒背景・白文字 */
+  [data-testid="stExpander"] {
+    background: #1a1e2e !important; border-radius: 14px !important;
+    border: 2px solid #3a4060 !important;
+  }
+  [data-testid="stExpander"] summary {
+    color: #e8eeff !important; font-weight: 700 !important;
+  }
+  [data-testid="stExpanderDetails"] { color: #d0d8f0 !important; }
+  [data-testid="stExpanderDetails"] p,
+  [data-testid="stExpanderDetails"] li,
+  [data-testid="stExpanderDetails"] strong { color: #e8eeff !important; }
+  [data-testid="stExpanderDetails"] h4 { color: #a0c4ff !important; }
+
   /* 汎用カード */
   .puyo-card {
     border-radius: 20px; padding: 18px 20px; margin-bottom: 14px;
@@ -109,6 +123,15 @@ def _tradingview_url(symbol: str) -> str:
 
 def _yen(v: float | None) -> str:
     return f"¥{v:,.0f}" if v is not None else "—"
+
+
+def _signed_dev(dev: float | None) -> str:
+    """乖離率を +/- カラーHTMLで返す。マイナス=赤（割安・チャンス）、プラス=緑（割高）。"""
+    if dev is None:
+        return '<span style="color:#aaa;">—</span>'
+    if dev < 0:
+        return f'<span style="color:#f05060;font-weight:900;">{dev:+.1f}%</span>'
+    return f'<span style="color:#44cc88;font-weight:900;">{dev:+.1f}%</span>'
 
 
 def _recovery_profit_100(price: float | None, dev: float | None) -> float | None:
@@ -266,7 +289,7 @@ else:
 
     for row in data.rows:
         th_r = _THEME.get(row.status, _THEME["no_data"])
-        dev_r   = f"{row.current_deviation_pct:+.1f}%" if row.current_deviation_pct is not None else "—"
+        dev_r   = _signed_dev(row.current_deviation_pct)
         price_r = _yen(row.current_price)
         unit_r  = _yen(row.current_price * 100) if row.current_price is not None else "—"
         tv_url  = _tradingview_url(row.symbol)
@@ -319,7 +342,7 @@ else:
 
             f'<div class="card-metric">'
             f'<div style="font-size:11px;color:#778899;font-weight:700;">25日平均との差</div>'
-            f'<div style="font-size:22px;font-weight:900;color:{th_r["col"]};text-shadow:0 2px 0 {th_r["brd"]};">{dev_r}</div>'
+            f'<div style="font-size:22px;text-shadow:0 2px 0 {th_r["brd"]};">{dev_r}</div>'
             f'</div>'
 
             f'{profit_html}'
